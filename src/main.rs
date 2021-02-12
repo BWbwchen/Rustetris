@@ -189,12 +189,12 @@ impl Tetris {
         self.backGround.draw(mb)?;
         self.nowPiece.draw(mb)?;
 
-        let mut predect = self.nowPiece.clone();
-        // predect piece
+        let mut predict = self.nowPiece.clone();
+        // predict piece
         for i in 1..20 {
             if !self.nowPiece.piece_fit(0, i) || !self.piece_fit(0, i) {
-                // draw predect
-                predect.y += i - 1;
+                // draw predict
+                predict.y += i - 1;
                 break;
             }
         }
@@ -202,11 +202,11 @@ impl Tetris {
             for j in 0..4 {
                 let mut bb = graphics::Rect::new(0.0, 0.0, BLOCK_SIZE as f32, BLOCK_SIZE as f32);
                 bb.move_to(Point2 {
-                    x: ((predect.x + j) * BLOCK_SIZE as i32 + SCREEN_OFFSET) as f32,
-                    y: ((predect.y + i) * BLOCK_SIZE as i32) as f32,
+                    x: ((predict.x + j) * BLOCK_SIZE as i32 + SCREEN_OFFSET) as f32,
+                    y: ((predict.y + i) * BLOCK_SIZE as i32) as f32,
                 });
-                let (rj, ri) = predect.rotate_index(j as usize, i as usize);
-                if PIECE_TYPE[predect.piece_type as usize][ri][rj] == true {
+                let (rj, ri) = predict.rotate_index(j as usize, i as usize);
+                if PIECE_TYPE[predict.piece_type as usize][ri][rj] == true {
                     mb.rectangle(
                         graphics::DrawMode::fill(),
                         bb,
