@@ -8,6 +8,7 @@ use std::vec;
 const TETRIS_WIDTH: usize = 10;
 const TETRIS_HEIGHT: usize = 20;
 const BLOCK_SIZE: usize = 30;
+const SCREEN_OFFSET: i32 = 250;
 
 struct Tetris {
     nowPiece: Piece,
@@ -187,6 +188,39 @@ impl Tetris {
     fn draw(&mut self, mb: &mut graphics::MeshBuilder) -> GameResult {
         self.backGround.draw(mb)?;
         self.nowPiece.draw(mb)?;
+
+        let mut predect = self.nowPiece.clone();
+        // predect piece
+        for i in 1..20 {
+            if !self.nowPiece.piece_fit(0, i) || !self.piece_fit(0, i) {
+                // draw predect
+                predect.y += i - 1;
+                break;
+            }
+        }
+        for i in 0..4 {
+            for j in 0..4 {
+                let mut bb = graphics::Rect::new(0.0, 0.0, BLOCK_SIZE as f32, BLOCK_SIZE as f32);
+                bb.move_to(Point2 {
+                    x: ((predect.x + j) * BLOCK_SIZE as i32 + SCREEN_OFFSET) as f32,
+                    y: ((predect.y + i) * BLOCK_SIZE as i32) as f32,
+                });
+                let (rj, ri) = predect.rotate_index(j as usize, i as usize);
+                if PIECE_TYPE[predect.piece_type as usize][ri][rj] == true {
+                    mb.rectangle(
+                        graphics::DrawMode::fill(),
+                        bb,
+                        graphics::Color::new(0.0, 0.0, 0.0, 0.8),
+                    );
+                    mb.rectangle(
+                        graphics::DrawMode::stroke(2.0),
+                        bb,
+                        graphics::Color::new(0.0, 0.0, 0.0, 0.8),
+                    );
+                }
+            }
+        }
+
         Ok(())
     }
 
@@ -257,7 +291,7 @@ impl Background {
             for j in 0..TETRIS_WIDTH {
                 let mut bb = graphics::Rect::new(0.0, 0.0, BLOCK_SIZE as f32, BLOCK_SIZE as f32);
                 bb.move_to(Point2 {
-                    x: (j * BLOCK_SIZE + 200) as f32,
+                    x: (j * BLOCK_SIZE + SCREEN_OFFSET as usize) as f32,
                     y: (i * BLOCK_SIZE) as f32,
                 });
                 mb.rectangle(
@@ -346,7 +380,7 @@ impl Piece {
             for j in 0..4 {
                 let mut bb = graphics::Rect::new(0.0, 0.0, BLOCK_SIZE as f32, BLOCK_SIZE as f32);
                 bb.move_to(Point2 {
-                    x: ((self.x + j) * BLOCK_SIZE as i32 + 200) as f32,
+                    x: ((self.x + j) * BLOCK_SIZE as i32 + SCREEN_OFFSET) as f32,
                     y: ((self.y + i) * BLOCK_SIZE as i32) as f32,
                 });
                 let (rj, ri) = self.rotate_index(j as usize, i as usize);
