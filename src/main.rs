@@ -3,6 +3,7 @@ use ggez::input::keyboard::{KeyCode, KeyMods};
 use ggez::*;
 use mint::Point2;
 use rand::Rng;
+use std::vec;
 
 const TETRIS_WIDTH: usize = 10;
 const TETRIS_HEIGHT: usize = 20;
@@ -194,9 +195,7 @@ impl Tetris {
         if self.nowPiece.piece_fit(0, 1) && self.piece_fit(0, 1) {
             self.nowPiece.move_piece(0, 1);
         } else {
-            // record the old piece
-            self.backGround.store(self.nowPiece);
-            self.nowPiece = Piece::random_piece();
+            self.check_finish_line(0, 0);
         }
         Ok(())
     }
@@ -234,12 +233,16 @@ impl Tetris {
     fn speed_drop(&mut self) {
         for i in 1..20 {
             if !self.nowPiece.piece_fit(0, i) || !self.piece_fit(0, i) {
-                self.nowPiece.move_piece(0, i - 1);
-                self.backGround.store(self.nowPiece);
-                self.nowPiece = Piece::random_piece();
+                self.check_finish_line(0, i - 1);
                 break;
             }
         }
+    }
+    fn check_finish_line(&mut self, x: i32, y: i32) {
+        self.nowPiece.move_piece(x, y);
+        self.backGround.store(self.nowPiece);
+        self.nowPiece = Piece::random_piece();
+        self.backGround.finish_line();
     }
 }
 
@@ -292,6 +295,36 @@ impl Background {
             return false;
         }
         true
+    }
+    fn finish_line(&mut self) {
+        // detect how many full line
+        let mut fullLine: Vec<usize> = Vec::new();
+        for row in 0..TETRIS_HEIGHT {
+            let mut full: bool = true;
+            for col in 0..TETRIS_WIDTH {
+                full &= self.record[row as usize][col as usize];
+            }
+            if full {
+                fullLine.push(row as usize);
+            }
+        }
+
+        //fullLine.reverse();
+
+        // clear full line
+        for (_, &row_index) in fullLine.iter().enumerate() {
+            for row in (1..=row_index).rev() {
+                for col in 0..TETRIS_WIDTH {
+                    self.record[row][col] = self.record[row - 1][col];
+                    self.color_map[row][col] = self.color_map[row - 1][col];
+                }
+            }
+            // reset top line
+            for col in 0..TETRIS_WIDTH {
+                self.record[0][col] = false;
+                self.color_map[0][col] = 9;
+            }
+        }
     }
 }
 
