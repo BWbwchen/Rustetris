@@ -1,4 +1,4 @@
-# Rustetris
+# RusTetris
 
 This is my practice project for learning Rust programming language.
 
