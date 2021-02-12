@@ -2092,7 +2092,7 @@ version = "0.1.0"
 dependencies = [
  "ggez",
  "mint",
- "rand 0.7.3",
+ "rand 0.8.3",
 ]
 
 [[package]]
