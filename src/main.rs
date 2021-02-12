@@ -210,7 +210,6 @@ impl Tetris {
                     && self.backGround.record[(self.nowPiece.y + row as i32 + y) as usize]
                         [(self.nowPiece.x + col as i32 + x) as usize]
                 {
-                    println!("[ERROR] piece will overlap with record");
                     return false;
                 }
             }
@@ -266,6 +265,11 @@ impl Background {
                     bb,
                     BLOCK_COLOR[self.color_map[i][j] as usize],
                 );
+                mb.rectangle(
+                    graphics::DrawMode::stroke(2.0),
+                    bb,
+                    graphics::Color::new(0.0, 0.0, 0.0, 0.2),
+                );
             }
         }
         Ok(())
@@ -308,8 +312,6 @@ impl Background {
                 fullLine.push(row as usize);
             }
         }
-
-        //fullLine.reverse();
 
         // clear full line
         for (_, &row_index) in fullLine.iter().enumerate() {
@@ -354,6 +356,7 @@ impl Piece {
                         bb,
                         BLOCK_COLOR[self.color as usize],
                     );
+                    mb.rectangle(graphics::DrawMode::stroke(2.0), bb, graphics::BLACK);
                 }
             }
         }
@@ -371,7 +374,6 @@ impl Piece {
                         || self.x + col as i32 + x >= TETRIS_WIDTH as i32
                         || self.x + col as i32 + x < 0)
                 {
-                    println!("[ERROR] piece will out of boundary");
                     return false;
                 }
             }
