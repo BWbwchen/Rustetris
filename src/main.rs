@@ -3,7 +3,7 @@ use ggez::input::keyboard::{KeyCode, KeyMods};
 use ggez::*;
 use mint::Point2;
 use rand::Rng;
-use std::vec;
+use std::vec::Vec;
 
 const TETRIS_WIDTH: usize = 10;
 const TETRIS_HEIGHT: usize = 20;
@@ -11,12 +11,12 @@ const BLOCK_SIZE: usize = 30;
 const SCREEN_OFFSET: i32 = 250;
 
 struct Tetris {
-    nowPiece: Piece,
-    backGround: Background,
+    now_piece: Piece,
+    back_ground: Background,
 }
 #[derive(Copy, Clone, Debug)]
 struct Piece {
-    piece_type: i32,
+    piece_type: usize,
     turn: i32,
     x: i32,
     y: i32,
@@ -178,21 +178,21 @@ pub fn main() {
 }
 
 impl Tetris {
-    pub fn new(ctx: &mut Context) -> Tetris {
+    pub fn new(_ctx: &mut Context) -> Tetris {
         Tetris {
-            nowPiece: Piece::random_piece(),
-            backGround: Background::new(),
+            now_piece: Piece::random_piece(),
+            back_ground: Background::new(),
         }
     }
 
     fn draw(&mut self, mb: &mut graphics::MeshBuilder) -> GameResult {
-        self.backGround.draw(mb)?;
-        self.nowPiece.draw(mb)?;
+        self.back_ground.draw(mb)?;
+        self.now_piece.draw(mb)?;
 
-        let mut predict = self.nowPiece.clone();
+        let mut predict = self.now_piece.clone();
         // predict piece
         for i in 1..20 {
-            if !self.nowPiece.piece_fit(0, i) || !self.piece_fit(0, i) {
+            if !self.now_piece.piece_fit(0, i) || !self.piece_fit(0, i) {
                 // draw predict
                 predict.y += i - 1;
                 break;
@@ -206,7 +206,7 @@ impl Tetris {
                     y: ((predict.y + i) * BLOCK_SIZE as i32) as f32,
                 });
                 let (rj, ri) = predict.rotate_index(j as usize, i as usize);
-                if PIECE_TYPE[predict.piece_type as usize][ri][rj] == true {
+                if PIECE_TYPE[predict.piece_type][ri][rj] == true {
                     mb.rectangle(
                         graphics::DrawMode::fill(),
                         bb,
@@ -224,10 +224,10 @@ impl Tetris {
         Ok(())
     }
 
-    // nowPiece drop down 1 block
+    // now_piece drop down 1 block
     fn update(&mut self) -> GameResult {
-        if self.nowPiece.piece_fit(0, 1) && self.piece_fit(0, 1) {
-            self.nowPiece.move_piece(0, 1);
+        if self.now_piece.piece_fit(0, 1) && self.piece_fit(0, 1) {
+            self.now_piece.move_piece(0, 1);
         } else {
             self.check_finish_line(0, 0);
         }
@@ -239,10 +239,10 @@ impl Tetris {
         // boundary check
         for row in 0..4 {
             for col in 0..4 {
-                let (rcol, rrow) = self.nowPiece.rotate_index(col, row);
-                if PIECE_TYPE[self.nowPiece.piece_type as usize][rrow][rcol]
-                    && self.backGround.record[(self.nowPiece.y + row as i32 + y) as usize]
-                        [(self.nowPiece.x + col as i32 + x) as usize]
+                let (rcol, rrow) = self.now_piece.rotate_index(col, row);
+                if PIECE_TYPE[self.now_piece.piece_type][rrow][rcol]
+                    && self.back_ground.record[(self.now_piece.y + row as i32 + y) as usize]
+                        [(self.now_piece.x + col as i32 + x) as usize]
                 {
                     return false;
                 }
@@ -251,31 +251,38 @@ impl Tetris {
         true
     }
     fn move_piece(&mut self, x: i32, y: i32) {
-        if self.nowPiece.piece_fit(x, y) && self.piece_fit(x, y) {
-            self.nowPiece.move_piece(x, y);
+        if self.now_piece.piece_fit(x, y) && self.piece_fit(x, y) {
+            self.now_piece.move_piece(x, y);
         }
     }
     fn turn(&mut self) {
-        self.nowPiece.turn += 1;
-        if self.nowPiece.piece_fit(0, 0) && self.piece_fit(0, 0) {
-            self.nowPiece.turn %= 4;
+        self.now_piece.turn += 1;
+        if self.now_piece.piece_fit(0, 0) && self.piece_fit(0, 0) {
+            self.now_piece.turn %= 4;
         } else {
-            self.nowPiece.turn -= 1;
+            self.now_piece.turn -= 1;
         }
     }
     fn speed_drop(&mut self) {
         for i in 1..20 {
-            if !self.nowPiece.piece_fit(0, i) || !self.piece_fit(0, i) {
+            if !self.now_piece.piece_fit(0, i) || !self.piece_fit(0, i) {
                 self.check_finish_line(0, i - 1);
                 break;
             }
         }
     }
     fn check_finish_line(&mut self, x: i32, y: i32) {
-        self.nowPiece.move_piece(x, y);
-        self.backGround.store(self.nowPiece);
-        self.nowPiece = Piece::random_piece();
-        self.backGround.finish_line();
+        self.now_piece.move_piece(x, y);
+        self.back_ground.store(self.now_piece);
+        self.now_piece = Piece::random_piece();
+        self.back_ground.finish_line();
+        if !self.piece_fit(0, 0) {
+            println!("Game Over !");
+            self.reset();
+        }
+    }
+    fn reset(&mut self) {
+        self.back_ground = Background::new();
     }
 }
 
@@ -297,7 +304,7 @@ impl Background {
                 mb.rectangle(
                     graphics::DrawMode::fill(),
                     bb,
-                    BLOCK_COLOR[self.color_map[i][j] as usize],
+                    BLOCK_COLOR[self.color_map[i][j]],
                 );
                 mb.rectangle(
                     graphics::DrawMode::stroke(2.0),
@@ -315,8 +322,8 @@ impl Background {
                 if self.in_boundary(old_piece, row as i32, col as i32) {
                     self.record[(old_piece.y + row as i32) as usize]
                         [(old_piece.x + col as i32) as usize] |=
-                        PIECE_TYPE[old_piece.piece_type as usize][rrow][rcol];
-                    if PIECE_TYPE[old_piece.piece_type as usize][rrow][rcol] {
+                        PIECE_TYPE[old_piece.piece_type][rrow][rcol];
+                    if PIECE_TYPE[old_piece.piece_type][rrow][rcol] {
                         self.color_map[(old_piece.y + row as i32) as usize]
                             [(old_piece.x + col as i32) as usize] = old_piece.color;
                     }
@@ -336,19 +343,19 @@ impl Background {
     }
     fn finish_line(&mut self) {
         // detect how many full line
-        let mut fullLine: Vec<usize> = Vec::new();
+        let mut full_line: Vec<usize> = Vec::new();
         for row in 0..TETRIS_HEIGHT {
             let mut full: bool = true;
             for col in 0..TETRIS_WIDTH {
                 full &= self.record[row as usize][col as usize];
             }
             if full {
-                fullLine.push(row as usize);
+                full_line.push(row as usize);
             }
         }
 
         // clear full line
-        for (_, &row_index) in fullLine.iter().enumerate() {
+        for (_, &row_index) in full_line.iter().enumerate() {
             for row in (1..=row_index).rev() {
                 for col in 0..TETRIS_WIDTH {
                     self.record[row][col] = self.record[row - 1][col];
@@ -384,7 +391,7 @@ impl Piece {
                     y: ((self.y + i) * BLOCK_SIZE as i32) as f32,
                 });
                 let (rj, ri) = self.rotate_index(j as usize, i as usize);
-                if PIECE_TYPE[self.piece_type as usize][ri][rj] == true {
+                if PIECE_TYPE[self.piece_type][ri][rj] == true {
                     mb.rectangle(
                         graphics::DrawMode::fill(),
                         bb,
@@ -402,7 +409,7 @@ impl Piece {
         for row in 0..4 {
             for col in 0..4 {
                 let (rcol, rrow) = self.rotate_index(col, row);
-                if PIECE_TYPE[self.piece_type as usize][rrow][rcol]
+                if PIECE_TYPE[self.piece_type][rrow][rcol]
                     && (self.y + row as i32 + y >= TETRIS_HEIGHT as i32
                         || self.y + row as i32 + y < 0
                         || self.x + col as i32 + x >= TETRIS_WIDTH as i32
