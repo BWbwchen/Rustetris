@@ -2,6 +2,8 @@
 
 This is my practice project for learning Rust programming language.
 
+![](tetris_rust.gif)
+
 ## Architecture of code
 The game is mainly controlled by struct **Tetris**.
 

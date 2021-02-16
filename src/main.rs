@@ -126,7 +126,7 @@ const BLOCK_COLOR: [graphics::Color; 11] = [
 
 impl ggez::event::EventHandler for Tetris {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        while timer::check_update_time(ctx, 1) {
+        while timer::check_update_time(ctx, 3) {
             self.update()?;
         }
         Ok(())
