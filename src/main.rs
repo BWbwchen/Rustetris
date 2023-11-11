@@ -1,6 +1,8 @@
+use ggez::event::{self, EventHandler};
 use ggez::input::keyboard::KeyCode::*;
 use ggez::input::keyboard::{KeyCode, KeyMods};
 use ggez::*;
+use ggez::{Context, ContextBuilder, GameResult};
 use mint::Point2;
 use rand::Rng;
 use std::vec::Vec;
@@ -119,20 +121,20 @@ const BLOCK_COLOR: [graphics::Color; 11] = [
     // GOLD
     graphics::Color::new(255.0, 182.0, 0.0, 1.0),
     // WHITE
-    graphics::WHITE,
+    graphics::Color::WHITE,
     // BLACK
-    graphics::BLACK,
+    graphics::Color::BLACK,
 ];
 
-impl ggez::event::EventHandler for Tetris {
-    fn update(&mut self, ctx: &mut Context) -> GameResult {
+impl EventHandler<GameError> for Tetris {
+    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         while timer::check_update_time(ctx, 3) {
             self.update()?;
         }
         Ok(())
     }
-    fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        graphics::clear(ctx, graphics::BLACK);
+    fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+        graphics::clear(ctx, graphics::Color::BLACK);
 
         let mb = &mut graphics::MeshBuilder::new();
 
@@ -167,14 +169,14 @@ impl ggez::event::EventHandler for Tetris {
 
 pub fn main() {
     let c = conf::Conf::new();
-    let (ref mut ctx, ref mut event_loop) = ContextBuilder::new("Tetris Game", "BWbwchen")
-        .conf(c)
+    let (mut ctx, event_loop) = ContextBuilder::new("Tetris Game", "BWbwchen")
+        .default_conf(c)
         .build()
         .unwrap();
 
-    let my_game = &mut Tetris::new(ctx);
+    let my_game = Tetris::new(&mut ctx);
 
-    event::run(ctx, event_loop, my_game).unwrap();
+    event::run(ctx, event_loop, my_game);
 }
 
 impl Tetris {
@@ -185,7 +187,7 @@ impl Tetris {
         }
     }
 
-    fn draw(&mut self, mb: &mut graphics::MeshBuilder) -> GameResult {
+    fn draw(&mut self, mb: &mut graphics::MeshBuilder) -> GameResult<()> {
         self.back_ground.draw(mb)?;
         self.now_piece.draw(mb)?;
 
@@ -293,7 +295,7 @@ impl Background {
             color_map: [[9; TETRIS_WIDTH]; TETRIS_HEIGHT],
         }
     }
-    fn draw(&mut self, mb: &mut graphics::MeshBuilder) -> GameResult {
+    fn draw(&mut self, mb: &mut graphics::MeshBuilder) -> GameResult<()> {
         for i in 0..TETRIS_HEIGHT {
             for j in 0..TETRIS_WIDTH {
                 let mut bb = graphics::Rect::new(0.0, 0.0, BLOCK_SIZE as f32, BLOCK_SIZE as f32);
@@ -382,7 +384,7 @@ impl Piece {
             color: rng.gen_range(0..9),
         }
     }
-    fn draw(&mut self, mb: &mut graphics::MeshBuilder) -> GameResult {
+    fn draw(&mut self, mb: &mut graphics::MeshBuilder) -> GameResult<()> {
         for i in 0..4 {
             for j in 0..4 {
                 let mut bb = graphics::Rect::new(0.0, 0.0, BLOCK_SIZE as f32, BLOCK_SIZE as f32);
@@ -397,7 +399,7 @@ impl Piece {
                         bb,
                         BLOCK_COLOR[self.color as usize],
                     );
-                    mb.rectangle(graphics::DrawMode::stroke(2.0), bb, graphics::BLACK);
+                    mb.rectangle(graphics::DrawMode::stroke(2.0), bb, graphics::Color::BLACK);
                 }
             }
         }
